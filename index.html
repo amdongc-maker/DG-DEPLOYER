@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Contractor DG Panel</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+  
+body{font-family:Segoe UI;background:#f1f5f9;margin:0}
+header{background:#047857;color:#fff;padding:14px;text-align:center;font-weight:700;font-size:18px}
+.container{max-width:1100px;margin:auto;padding:12px}
+#loginBox{
+
+max-width:420px;
+
+margin:70px auto;
+
+padding:25px;
+
+border-radius:20px;
+
+background:white;
+
+box-shadow:0 8px 25px rgba(0,0,0,.15);
+
+}
+.card{background:#fff;padding:14px;border-radius:12px;margin-bottom:14px;box-shadow:0 4px 12px rgba(0,0,0,.08)}
+.profile{background:#ecfdf5;border-left:5px solid #047857}
+input,select{width:100%;padding:10px;border-radius:8px;border:1px solid #ccc;margin:6px 0}
+button{background:#22c55e;color:#fff;padding:10px;border:none;border-radius:8px;font-weight:700;width:100%;margin-top:10px;cursor:pointer}
+.hidden{display:none}
+table{width:100%;border-collapse:collapse;font-size:14px;margin-top:10px}
+th,td{border:1px solid #e5e7eb;padding:8px;text-align:center}
+th{background:#f0fdf4}
+.history{background:#f0fdf4;border-left:4px solid #22c55e}
+input, select{
+  width:100%;
+  padding:12px;
+  margin-top:10px;
+  border-radius:12px;
+  border:1px solid #ddd;
+  box-sizing:border-box;
+  font-size:14px;
+}
+/* Buttons */
+button{
+  background-color: #047857;
+  width:100%;
+  padding:14px;
+  margin-top:12px;
+  border:none;
+  border-radius:14px;
+  font-weight:700;color: #f1f5f9;
+  cursor:pointer;
+}
+body{
+margin:0;
+font-family:Segoe UI;
+background:#f3f4f6;
+}
+
+.container{
+max-width:450px;
+margin:auto;
+padding:15px;
+}
+
+.card{
+border-radius:18px;
+}
+
+table{
+display:block;
+overflow-x:auto;
+white-space:nowrap;
+}
+
+button{
+font-size:16px;
+}
+
+input,select{
+font-size:16px;
+}
+
+@media(max-width:600px){
+
+.container{
+padding:10px;
+}
+
+header h2{
+font-size:17px;
+}
+
+table{
+font-size:13px;
+}
+
+}
+/*==============================
+PREMIUM LOADER
+==============================*/
+
+#loadingOverlay{
+position:fixed;
+left:0;
+top:0;
+width:100%;
+height:100%;
+display:none;
+justify-content:center;
+align-items:center;
+background:rgba(0,0,0,.55);
+backdrop-filter:blur(5px);
+z-index:999999;
+}
+
+.loaderCard{
+width:300px;
+background:#fff;
+padding:30px;
+border-radius:20px;
+text-align:center;
+box-shadow:0 20px 40px rgba(0,0,0,.25);
+}
+
+.loaderSpinner{
+width:65px;
+height:65px;
+margin:auto;
+border:7px solid #dbeafe;
+border-top:7px solid #16a34a;
+border-radius:50%;
+animation:spin .9s linear infinite;
+}
+
+.loaderTitle{
+margin-top:18px;
+font-size:20px;
+font-weight:bold;
+color:#047857;
+}
+
+.loaderText{
+margin-top:8px;
+font-size:14px;
+color:#666;
+}
+
+@keyframes spin{
+100%{
+transform:rotate(360deg);
+}
+}
+</style>
+<link rel="manifest" href="manifest.json">
+
+<meta name="theme-color" content="#047857">
+
+<meta name="mobile-web-app-capable" content="yes">
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+<link rel="apple-touch-icon" href="icon-192.png">
+</head>
+
+<body>
+
+<header>
+<div style="position:relative;height:60px;display:flex;align-items:center;justify-content:left;">
+
+<h2 style="margin:0;color:#fff;font-size:18px;font-weight:bold;">
+🚛 CONTRACTOR DG PANEL
+</h2>
+
+<button id="logoutBtn"
+onclick="logout()"
+style="
+position:absolute;
+right:15px;
+width:auto;
+padding:8px 18px;
+background:#dc2626;
+border:none;
+border-radius:8px;
+color:#fff;
+font-weight:bold;
+display:none;">
+Logout
+</button>
+
+</div>
+</header>
+
+<div class="container">
+
+<div id="loginBox" class="card">
+<h3>Contractor Login</h3>
+<input id="user" placeholder="Contractor ID">
+<input id="pass" type="password" placeholder="Password">
+<button onclick="login()">Login</button>
+<div id="msg" style="color:red"></div>
+</div>
+
+<div id="mainBox" class="hidden">
+<div id="profileBox" class="card profile"></div>
+
+<h3>🟢 Active Requests</h3>
+<div id="activeData"></div>
+
+<h3>📜 History</h3>
+<div id="historyData"></div>
+</div>
+</div>
+<script>
+  function formatDateTime(val){
+  if(!val || val === "NA") return "NA";
+
+  let d = new Date(val);
+
+  if(isNaN(d.getTime())) return "NA";
+
+  return d.toLocaleString("en-GB");
+}
+const WEBAPP_URL="https://script.google.com/macros/s/AKfycbzkAbliBCybsBRvQbhF5ysIk0iBBK8F8F_ndWWRtVB3hWFNseoornI75PhpZpc_93RzdQ/exec";
+function showLoading(title,text){
+
+document.querySelector(".loaderTitle").innerHTML=title;
+
+document.querySelector(".loaderText").innerHTML=text;
+
+document.getElementById("loadingOverlay").style.display="flex";
+
+}
+
+function hideLoading(){
+
+document.getElementById("loadingOverlay").style.display="none";
+
+}
+
+function speak(msg){
+
+if(!window.speechSynthesis) return;
+
+speechSynthesis.cancel();
+
+let voice=new SpeechSynthesisUtterance(msg);
+
+voice.lang="en-IN";
+
+voice.rate=1;
+
+voice.pitch=1;
+
+speechSynthesis.speak(voice);
+
+}
+/* LOGIN USERS */
+
+let CURRENT_CONTRACTOR=null;
+
+/* LOGIN */
+function login(){
+
+fetch(
+
+WEBAPP_URL+
+
+"?action=contractorLogin"+
+
+"&username="+encodeURIComponent(user.value)+
+
+"&password="+encodeURIComponent(pass.value)
+
+)
+
+.then(r=>r.json())
+
+.then(res=>{
+
+if(!res.success){
+
+msg.innerHTML="Invalid Login";
+
+return;
+
+}
+
+CURRENT_CONTRACTOR=res;
+localStorage.setItem(
+    "DG_CONTRACTOR_LOGIN",
+    JSON.stringify(res)
+);
+loginBox.classList.add("hidden");
+
+mainBox.classList.remove("hidden");
+document.getElementById("logoutBtn").style.display="block";
+profileBox.innerHTML=`
+
+
+<b>${res.name}</b><br>
+
+${res.company}<br>
+
+${res.mobile}
+
+`;
+
+loadData();
+
+});
+
+}
+/* FORMAT DATE */
+function fmtDate(d){
+ if(!d) return "NA";
+ try{ return new Date(d).toLocaleDateString("en-GB"); }
+ catch(e){ return d; }
+}
+
+/* LOAD DATA */
+function loadData(){
+
+fetch(`${WEBAPP_URL}?action=contractorApproved&company=${encodeURIComponent(CURRENT_CONTRACTOR.company)}`)
+
+.then(r=>r.json())
+
+.then(res=>{
+
+  // Latest Request Top
+  res.sort((a,b)=>String(b.requestId).localeCompare(String(a.requestId)));
+
+  let activeHTML="";
+  let historyHTML="";
+
+  res.forEach(req=>{
+
+    let aRows="";
+    let hRows="";
+    let srActive=1;
+    let srHistory=1;
+
+    req.wells.forEach(w=>{
+
+      let status=String(w.dgStatus || "").trim();
+
+      // =========================
+      // ACTIVE
+      // =========================
+      if(status==="Pending"){
+
+        let ops=CURRENT_CONTRACTOR.operators
+        .map(o=>`<option value="${o.name}|${o.mobile}">${o.name} (${o.mobile})</option>`)
+        .join("");
+
+        aRows+=`
+<tr>
+<td>${srActive++}</td>
+<td>${w.well}</td>
+<td>
+<select class="opSelect" data-row="${w.rowId}">
+<option value="">Select Supervisor</option>
+${ops}
+</select>
+</td>
+</tr>`;
+
+      }
+
+      // =========================
+      // HISTORY
+      // =========================
+      else if(
+        status==="Operator Assigned" ||
+        status==="Completed" ||
+        status==="DG CANCELLED"
+      ){
+
+        hRows+=`
+<tr>
+<td>${srHistory++}</td>
+<td>${w.well || "NA"}</td>
+<td>${w.operator || "NA"}</td>
+<td>${w.operatorMobile || "NA"}</td>
+<td>${formatDateTime(w.dgStart)}</td>
+<td>${formatDateTime(w.dgStop)}</td>
+<td>${w.totalTime || "NA"}</td>
+</tr>`;
+
+      }
+
+    });
+
+    // =========================
+    // ACTIVE CARD
+    // =========================
+    if(aRows){
+
+      activeHTML+=`
+<div class="card">
+
+<h4>Request ID : ${req.requestId}</h4>
+
+<b>Installation :</b> ${req.installation}<br>
+
+<b>Feeder :</b> ${req.feeder}<br>
+
+<b>Shutdown Date :</b> ${fmtDate(req.shutdownDate)}<br>
+
+<b>Requester :</b> ${req.requestedBy || "NA"}<br>
+
+<b>Mobile :</b> ${req.mobile || "NA"}<br>
+
+<hr>
+
+<table>
+
+<tr>
+
+<th>Sr</th>
+
+<th>Well</th>
+
+<th>Select Supervisor</th>
+
+</tr>
+
+${aRows}
+
+</table>
+
+<button onclick="finalSubmit(this)">FINAL SUBMIT</button>
+
+</div>`;
+
+    }
+
+    // =========================
+    // HISTORY CARD
+    // =========================
+    if(hRows){
+
+      historyHTML+=`
+<div class="card history">
+
+<h4>Request ID : ${req.requestId}</h4>
+
+<b>Installation :</b> ${req.installation}</b><br>
+
+<b>Feeder :</b> ${req.feeder}</b><br>
+
+<b>Shutdown Date :</b> ${fmtDate(req.shutdownDate)}</b><br>
+
+<b>Requester :</b> ${req.requestedBy || "NA"}</b><br>
+
+<b>Mobile :</b> ${req.mobile || "NA"}</b><br>
+
+<hr>
+
+<table>
+
+<tr>
+
+<th>Sr</th>
+
+<th>Well No</th>
+
+<th>Supervisor</th>
+
+<th>Mobile</th>
+
+<th>DG Start</th>
+
+<th>DG Stop</th>
+
+<th>Total Hrs</th>
+
+</tr>
+
+${hRows}
+
+</table>
+
+</div>`;
+
+    }
+
+  });
+
+  activeData.innerHTML=activeHTML || "<center>No Active Requests</center>";
+
+  historyData.innerHTML=historyHTML || "<center>No History Available</center>";
+
+});
+
+}
+
+/* FINAL SUBMIT */
+function finalSubmit(btn){
+
+  // 🔒 double click guard
+  if(btn.disabled) return;
+  btn.disabled = true;
+  btn.innerText = "Processing...";
+  showLoading(
+
+"Submitting Request",
+
+"Assigning Operator..."
+
+);
+
+speak(
+
+"Please wait. Supervisor assignment is in progress."
+
+);
+
+  const selects = btn.closest(".card").querySelectorAll(".opSelect");
+
+  let payload = [];
+
+  selects.forEach(s=>{
+    if(!s.value) return;
+
+    let [name,mobile] = s.value.split("|");
+
+    payload.push({
+      rowId: s.dataset.row,
+      operatorName: name,
+      operatorMobile: mobile
+    });
+  });
+
+  if(!payload.length){
+
+hideLoading();
+
+speak("Please select Supervisor first.");
+
+alert("Select supervisor First");
+
+btn.disabled=false;
+
+btn.innerText="FINAL SUBMIT";
+
+return;
+
+}
+
+  fetch(`${WEBAPP_URL}?action=contractorFinalSubmit&data=${encodeURIComponent(JSON.stringify(payload))}`)
+  .then(r=>r.text())
+  .then(txt=>{
+    if(String(txt).includes("OK")){
+  
+hideLoading();
+
+speak("Congratulations. DG deployed successfully.");
+
+explosionEffect();
+
+const popup = document.createElement("div");
+popup.innerHTML = "✅ DG DEPLOYED SUCCESSFULLY";
+popup.style.cssText = `
+position:fixed;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+background:#16a34a;
+color:#fff;
+padding:18px 30px;
+font-size:22px;
+font-weight:bold;
+border-radius:15px;
+box-shadow:0 10px 30px rgba(0,0,0,.3);
+z-index:999999;
+`;
+
+document.body.appendChild(popup);
+
+setTimeout(()=>{
+    popup.remove();
+},2500);
+
+btn.innerText="SUCCESS";
+loadData();
+
+}else{
+
+hideLoading();
+
+speak(
+
+"Server error."
+
+);
+
+alert("Server Error");
+
+btn.disabled=false;
+
+btn.innerText="FINAL SUBMIT";
+
+}
+  })
+  .catch(()=>{
+
+hideLoading();
+
+speak(
+
+"Network error. Please try again."
+
+);
+
+alert("Network Error");
+
+btn.disabled=false;
+
+btn.innerText="FINAL SUBMIT";
+
+});
+}
+function explosionEffect() {
+
+    // 💥 Main Blast
+    confetti({
+        particleCount: 250,
+        spread: 360,
+        startVelocity: 70,
+        gravity: 0.8,
+        ticks: 180,
+        scalar: 1.4,
+        origin: { x: 0.5, y: 0.45 },
+        colors: [
+            "#ff0000",
+            "#ff6600",
+            "#ffff00",
+            "#00ff00",
+            "#00ffff",
+            "#0066ff",
+            "#ff00ff",
+            "#ffffff"
+        ]
+    });
+
+    // ✨ Shockwave
+    setTimeout(() => {
+        confetti({
+            particleCount: 180,
+            spread: 360,
+            startVelocity: 40,
+            gravity: 1,
+            ticks: 220,
+            scalar: 0.9,
+            origin: { x: 0.5, y: 0.45 },
+            colors: ["#ffffff", "#ffd700", "#ffee58"]
+        });
+    }, 120);
+
+    // 🌟 Secondary Blast
+    setTimeout(() => {
+        confetti({
+            particleCount: 120,
+            spread: 360,
+            startVelocity: 55,
+            gravity: 0.9,
+            ticks: 150,
+            origin: { x: 0.5, y: 0.45 }
+        });
+    }, 250);
+
+}
+function logout(){
+
+localStorage.removeItem("DG_CONTRACTOR_LOGIN");
+
+CURRENT_CONTRACTOR = null;
+
+user.value = "";
+pass.value = "";
+msg.innerHTML = "";
+
+loginBox.classList.remove("hidden");
+mainBox.classList.add("hidden");
+
+activeData.innerHTML = "";
+historyData.innerHTML = "";
+profileBox.innerHTML = "";
+
+document.getElementById("logoutBtn").style.display = "none";
+
+}
+
+if("serviceWorker" in navigator){
+
+navigator.serviceWorker.register("service-worker.js");
+
+}
+window.onload = function () {
+
+    const saved = localStorage.getItem("DG_CONTRACTOR_LOGIN");
+
+    if (saved) {
+
+        CURRENT_CONTRACTOR = JSON.parse(saved);
+
+        loginBox.classList.add("hidden");
+        mainBox.classList.remove("hidden");
+
+        document.getElementById("logoutBtn").style.display = "block";
+
+        profileBox.innerHTML = `
+            <b>${CURRENT_CONTRACTOR.name}</b><br>
+            ${CURRENT_CONTRACTOR.company}<br>
+            ${CURRENT_CONTRACTOR.mobile}
+        `;
+
+        loadData();
+    }
+
+};
+</script>
+<div id="loadingOverlay">
+
+<div class="loaderCard">
+
+<div class="loaderSpinner"></div>
+
+<div class="loaderTitle">
+Processing...
+</div>
+
+<div class="loaderText">
+Please wait...
+</div>
+
+</div>
+
+</div>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+</body>
+</html>
